@@ -1,24 +1,22 @@
-import React, {useState} from 'react'
+import React from 'react'
 import {Redirect} from 'react-router'
-
 import {savePost} from './api'
 
 function Editor({user}) {
-  const [isSaving, setIsSaving] = useState(false)
-  const [redirect, setRedirect] = useState(false)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [redirect, setRedirect] = React.useState(false)
 
-  const handleSubmit = e => {
+  function handleSubmit(e) {
     e.preventDefault()
-    setIsSaving(true)
-
     const {title, content, tags} = e.target.elements
     const newPost = {
       title: title.value,
       content: content.value,
       tags: tags.value.split(',').map(t => t.trim()),
-      authorId: user.id,
       date: new Date().toISOString(),
+      authorId: user.id,
     }
+    setIsSaving(true)
     savePost(newPost).then(() => setRedirect(true))
   }
 
@@ -29,13 +27,13 @@ function Editor({user}) {
   return (
     <form onSubmit={handleSubmit}>
       <label htmlFor="title-input">Title</label>
-      <input name="title" id="title-input" />
+      <input id="title-input" name="title" />
 
       <label htmlFor="content-input">Content</label>
-      <input name="content" id="content-input" />
+      <textarea id="content-input" name="content" />
 
       <label htmlFor="tags-input">Tags</label>
-      <input name="tags" id="tags-input" />
+      <input id="tags-input" name="tags" />
 
       <button type="submit" disabled={isSaving}>
         Submit
