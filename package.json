@@ -5,7 +5,7 @@
   "description": "Course material for testing React components using react-testing-library",
   "main": "index.js",
   "scripts": {
-    "test": "kcd-scripts test",
+    "test": "kcd-scripts test --maxWorkers=4",
     "lint": "kcd-scripts lint",
     "validate": "kcd-scripts validate",
     "setup": "npm install --silent && npm run validate --silent"
