@@ -19,17 +19,6 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-// jest.mock('react-router', () => {
-//     return {
-//         Redirect: jest.fn(() => null),
-//       }
-// })
-
-// jest.mock('../api')
-// afterEach(() => {
-//     jest.clearAllMocks()
-// })
-
 const postBuilder = build('Post').fields({
   title: fake(f => f.lorem.words()),
   content: fake(f => f.lorem.paragraphs().replace(/\r/g, '')),
@@ -39,20 +28,32 @@ const postBuilder = build('Post').fields({
 const userBuilder = build('User').fields({
   id: sequence(s => `user-${s}`),
 })
+function renderEditor() {
+  const fakeUser = userBuilder()
+  const utils = render(<Editor user={fakeUser} />)
+
+  const fakePost = postBuilder()
+
+  utils.getByLabelText(/title/i).value = fakePost.title
+  utils.getByLabelText(/content/i).value = fakePost.content
+  utils.getByLabelText(/tags/i).value = fakePost.tags.join(', ')
+
+  const submitButton = utils.getByText(/submit/i)
+
+  return {
+    ...utils,
+    submitButton,
+    fakeUser,
+    fakePost,
+  }
+}
 
 test('renders a form with title, content, tags, and a submit button', async () => {
   mockSavePost.mockResolvedValueOnce()
-  const fakeUser = userBuilder()
-  const {getByLabelText, getByText} = render(<Editor user={fakeUser} />)
-
-  const fakePost = postBuilder()
   const preDate = new Date().getTime()
 
-  getByLabelText(/title/i).value = fakePost.title
-  getByLabelText(/content/i).value = fakePost.content
-  getByLabelText(/tags/i).value = fakePost.tags.join(', ')
+  const {submitButton, fakeUser, fakePost} = renderEditor()
 
-  const submitButton = getByText(/submit/i)
   fireEvent.click(submitButton)
 
   expect(submitButton).toBeDisabled()
@@ -69,4 +70,16 @@ test('renders a form with title, content, tags, and a submit button', async () =
   expect(date).toBeLessThanOrEqual(postDate)
 
   await wait(() => expect(MockRedirect).toHaveBeenCalledWith({to: '/'}, {}))
+})
+
+test('renders an error message from the server', async () => {
+  const error = 'test error'
+  mockSavePost.mockRejectedValueOnce({data: {error}})
+  const {submitButton, findByRole} = renderEditor()
+
+  fireEvent.click(submitButton)
+
+  const postError = await findByRole('alert')
+  expect(postError).toHaveTextContent(error)
+  expect(submitButton).not.toBeDisabled()
 })
